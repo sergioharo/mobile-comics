@@ -21,8 +21,11 @@ class ListAllComics(handlers.BaseJSONHandler):
         self.render("list_all.js", { 'comics': q})
         
 class GetComics(handlers.BaseJSONHandler):
-    def post(self):
-        logging.info(self.request.body)
-        data = json.loads(self.request.body)
-        q = Comic.get_by_id(data["comics"])
+    def get(self):
+        q = []
+        comics = self.request.get('data')
+        if comics:
+            logging.info(comics)
+            data = json.loads(comics)
+            q = Comic.get_by_id(data["comics"])
         self.render("list.js", { 'comics': q})

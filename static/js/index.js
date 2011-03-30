@@ -15,6 +15,15 @@ var state = {
     hasLoadedOptions: false
 }
 
+var MyOptions = new Ext.data.Store({
+    model: 'ShortComic',
+    autoLoad: true,
+    proxy: {
+        type: 'localstorage',
+        id: 'hb-selected-comics'
+    }
+});
+
 var OptionList = new Ext.data.Store({
     model: 'ShortComic',
     proxy: {
@@ -23,6 +32,36 @@ var OptionList = new Ext.data.Store({
         reader: {
             type: 'json',
             root: 'comics'
+        }
+    }
+});
+
+var ComicsStore = new Ext.data.Store({
+    model: 'Comic',
+    autoLoad: true,
+    filters: [
+        {
+            filterFn: function (item) {
+                var rec = MyOptions.getById(item.getId());
+                return (rec? true: false);
+            }
+        }
+    ],
+    proxy: {
+        type: 'ajax',
+        url : '/comics/get/',
+        reader: {
+            type: 'json',
+            root: 'comics'
+        },
+        buildRequest: function(operation) {
+            var request = Ext.data.AjaxProxy.superclass.buildRequest.call(this, operation);
+            var selectedComics = [];
+            MyOptions.each(function(record) {
+                selectedComics.push(record.getId());
+            })
+            request.params['data'] = JSON.stringify({comics: selectedComics});
+            return request;
         }
     }
 });
@@ -81,27 +120,54 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
         // Set options list
         ///////////////////////////////////////
         
+        this.optionsList = new Ext.List({
+            store: OptionList,
+            simpleSelect: true,
+            itemTpl : '{name}',
+            listeners: {
+                select: this.onOptionSelected,
+                deselect: this.onOptionDeselected,
+                deactivate: this.onOptionsHidden,
+                update: this.onOptionsReady,
+                scope: this
+            }
+        });
+        
         this.optionsPanel = new Ext.Panel({
             autoHeight:true,
             layout:'fit',
             useToolbar: false,
             updateTitleText: false,
             hidden: !Ext.is.Phone,
-            
-            items: new Ext.List({
-                store: OptionList,
-                itemTpl : '{name}',
-                listeners: {
-                    itemtap: this.onNavPanelItemTap,
-                    scope: this
-                }
-            })
+            items: this.optionsList 
         });
 
         if (!Ext.is.Phone) {
             this.optionsPanel.setWidth(300);
         }
-
+        
+        ///////////////////////////////////////
+        // Setup view
+        ///////////////////////////////////////
+        this.mainPanel = new Ext.Panel({
+            autoHeight: true,
+            autoWidth: true,
+            layout: 'fit',
+            useToolbar: false,
+            updateTitleText: false,
+            hidden: false,
+            items: new Ext.List({
+                store: ComicsStore,
+                disableSelection : true,
+                pressedCls: '',
+                cls: 'comic',
+                itemTpl : '<img src="{img_url}" />'
+            })
+        });
+        
+        this.items = this.Items || [];
+        this.items.unshift(this.mainPanel);
+        
         ///////////////////////////////////////
         // Final Setup
         ///////////////////////////////////////
@@ -163,21 +229,30 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
     /***************************************
     // List Listeners
     ***************************************/
-    onNavPanelItemTap: function(subList, subIdx, el, e) {
-        var store      = subList.getStore(),
-            record     = store.getAt(subIdx),
-            recordNode = record.node,
-            nestedList = this.optionsPanel,
-            title      = nestedList.renderTitleText(recordNode),
-            card, preventHide, anim;
-
-        if (record) {
-            card        = record.get('card');
-            anim        = record.get('cardSwitchAnimation');
-            preventHide = record.get('preventHide');
-        }
+    onOptionSelected: function(selectionModel, record) {
+        MyOptions.add(record.data);
+        MyOptions.sync();
     },
 
+    onOptionDeselected: function(selectionModel, record) {
+        var rec = MyOptions.getById(record.getId());
+        MyOptions.remove(rec);
+        MyOptions.sync();
+    },
+    
+    onOptionsHidden: function() {
+        MyOptions.sync();
+    },
+    
+    onOptionsReady: function() {
+        var model = this.optionsList.getSelectionModel();
+        MyOptions.each(function(record) {
+           var rec  = OptionList.getById(record.getId());
+           if(rec)
+            model.select(rec, true, true);
+        });
+    },
+    
     /***************************************
     // Layout handling
     ***************************************/
