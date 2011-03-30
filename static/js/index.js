@@ -18,9 +18,11 @@ var Controller = {
     
     onOptionsSync: function(options) {
         var comics = [];
-        for(var i = 0, len = options.create.length; i < len; ++i) {
-            var id = options.create[i].getId();
-            comics.push(id);
+        if(options.create) {
+            for(var i = 0, len = options.create.length; i < len; ++i) {
+                var id = options.create[i].getId();
+                comics.push(id);
+            }
         }
         
         if(comics.length > 0) {
@@ -37,8 +39,9 @@ var Controller = {
             ComicsStore.read(operation);
         }
         
-        if(options.destroy.length > 0)
+        if(options.destroy)
             ComicsStore.filter();  
+        return true;
     }
 };
 
@@ -210,7 +213,13 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
                 disableSelection : true,
                 pressedCls: '',
                 cls: 'comic',
-                itemTpl : '<img src="{img_url}" />'
+                itemTpl : '<div class="comic-info">                 \
+                            <div class="comic-name">{name}</div>    \
+                            <div class="comic-author">{author}</div>\
+                        </div>                                      \
+                        <div class="comic-icontainer">              \
+                            <img src="{img_url}" />                 \
+                        </div>'
             })
         });
         
@@ -253,10 +262,10 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
     onBackButtonTap: function() {
         var optPnl = this.optionsPanel;
 
-        // if we already in the nested list
         if (this.getActiveItem() === optPnl) {
             this.setActiveItem(this.lastActiveItem, 'flip');
             this.lastActiveItem = null;
+            this.onOptionsHidden();
         }
         this.toggleButtons();
     },

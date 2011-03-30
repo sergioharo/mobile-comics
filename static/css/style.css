@@ -1,13 +1,10 @@
 .comic {
-    border: 1px solid #CCC;
-    border-left: none;
-    border-bottom: none;
     text-align: center;
     padding: 1em;
 }
-.comic-info {
-    margin-bottom: 2em;
-}
+.comic-info:before, .comic-info:after { content: "\0020"; display: block; height: 0; overflow: hidden; }
+.comic-info:after { clear: both; }
+.comic-info { zoom: 1; }
 .comic-name {
     float: left;
     font-size: 120%;
