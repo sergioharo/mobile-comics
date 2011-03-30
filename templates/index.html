@@ -2,33 +2,7 @@
 
 {% block title %}Comics{% endblock %}
 
-{% block content %}
-    <div data-role="page" id="home">
-
-      <div data-role="header">
-        <h1>Home</h1>
-        <a href="#options" data-icon="gear" class="ui-btn-right" data-transition="flip">Options</a>
-      </div>
-
-      <div data-role="content"> 
-        <p>Choose comics from the options to get started.</p>    
-      </div>
-
-    </div>
-    
-    <div data-role="page" id="options">
-
-      <div data-role="header">
-        <a href="#home" data-icon="delete" data-transition="flip" data-direction="reverse">Cancel</a>
-        <h1>Options</h1>
-        <a href="#home" data-icon="check" data-transition="flip" data-direction="reverse" data-theme="b"  class="ui-btn-right" data-role="button" id="optionsSaveBtn">Save</a>
-      </div>
-
-      <div data-role="content"></div>
-
-    </div>
-    
-{% endblock %}
+{% block content %}{% endblock %}
 
 {% block body-scripts %}
     <script src="/static/js/index.js"></script>
