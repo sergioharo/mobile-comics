@@ -1,19 +1,150 @@
-/*******************************************************************************
-// Models
-********************************************************************************/
 Ext.ns('Comics');
 
-Ext.regModel('ShortComic', {
-    fields: ['name', 'id']
+/*******************************************************************************
+// Utils
+*******************************************************************************/
+Comics.Utils = {
+    getComicEntryId: function(comicId, entryId) {
+        var x = comicId << 20
+        return (entryId | x);
+    }
+}
+
+/*******************************************************************************
+// Models
+*******************************************************************************/
+Ext.regModel('ComicOption', {
+    fields: ['name', 'id', 'source']
 });
+
+Ext.regModel('SavedComic', {
+    fields: ['id']
+});
+
+Ext.regModel('ComicEntry', {
+    fields: ['id', 'comic_id', 'comic_entry_id', 'img_url'],
+    
+    proxy: {
+        type: 'rest',
+        url : '/entries',
+        reader: {
+            type: 'json',
+            root: 'entries'
+        },
+        buildUrl: function(request) {
+           var records = request.operation.records || [],
+               record  = records[0],
+               format  = this.format,
+               url     = request.url || this.url,
+               id      = record ? record.getId() : request.operation.id; // HERE
+
+           if (this.appendId && id) { // HERE
+               if (!url.match(/\/$/)) {
+                   url += '/';
+               }
+
+               url += id; // AND HERE
+           }
+
+           if (format) {
+               if (!url.match(/\.$/)) {
+                   url += '.';
+               }
+
+               url += format;
+           }
+
+           request.url = url;
+
+           return Ext.data.RestProxy.superclass.buildUrl.apply(this, arguments);
+       }
+    }
+});
+
+Comics.ComicEntry = Ext.ModelMgr.getModel('ComicEntry');
 
 Ext.regModel('Comic', {
-    fields: ['name', 'author', 'num_entries', 'id', 'img_url']
+    fields: ['name', 'author', 'num_entries', 'img_url', 'id']
 });
 
+/*******************************************************************************
+// Controller
+*******************************************************************************/
 var Controller = {
     state: {
-        hasLoadedOptions: false
+        hasLoadedOptions: false,
+        views: {
+            /****************
+            comic_id: {
+               current_entry: entry_id,
+               entries: {
+                   entry_id: img_url
+               }
+            }
+            *****************/
+        }
+    },
+    
+    setupView: function(comic) {
+        var id = comic.getId();
+        if(!Controller.state.views[id]) {
+            var cur = comic.get('num_entries');
+            Controller.state.views[id] = {
+                current_entry: cur,
+                entries: {}
+            }
+            Controller.state.views[id].entries[cur] = comic.get('img_url');
+        }
+    },
+    
+    getViewImg: function(id) {
+        var index = Controller.state.views[id].current_entry;
+        return Controller.state.views[id].entries[index];
+    },
+    
+    doViewNext: function(comic) {
+        Controller.setupView(comic);
+        var id = comic.getId();
+        var index = Controller.state.views[id].current_entry;
+        var max = comic.get('num_entries');
+        if(index >= max)
+            return;
+        index += 1;
+        Controller.doSetView(comic, index);
+    },
+    
+    doViewPrev: function(comic) {
+        Controller.setupView(comic);
+        var id = comic.getId();
+        var index = Controller.state.views[id].current_entry;
+        if(index <= 1)
+            return;
+        index -= 1;
+        Controller.doSetView(comic, index);
+    },
+    
+    doSetView: function(comic, index) {
+        var id = comic.getId();
+        var img = Controller.state.views[id].entries[index];
+        Controller.state.views[id].current_entry = index;
+        if(img) {
+            comic.set('img_url', img);
+        } else {
+            var ceid = Comics.Utils.getComicEntryId(id, index);
+            Comics.ComicEntry.load(ceid, {
+                scope: this,
+                callback: function(record, operation) {
+                    var cid = record.get('comic_id');
+                    var eid = record.get('comic_entry_id');
+                    var img = record.get('img_url');
+                    Controller.state.views[cid].entries[eid] = img;
+                    comic.set('img_url', img);
+                },
+                failure: function() {
+                    console.log('failed to load next entry for ' + comic.get('name'));
+                }
+            })
+        }
     },
     
     onOptionsSync: function(options) {
@@ -29,11 +160,7 @@ var Controller = {
             var operation = new Ext.data.Operation({
                 action: 'read',
                 addRecords: true,
-                filters: [
-                    {
-                        needed_comics: comics
-                    }
-                ]
+                needed_comics: comics
             });
 
             ComicsStore.read(operation);
@@ -45,8 +172,11 @@ var Controller = {
     }
 };
 
+/*******************************************************************************
+// Stores
+*******************************************************************************/
 var MyOptions = new Ext.data.Store({
-    model: 'ShortComic',
+    model: 'SavedComic',
     autoLoad: true,
     listeners: {
         beforesync: Controller.onOptionsSync,
@@ -66,10 +196,10 @@ var MyOptions = new Ext.data.Store({
 });
 
 var OptionList = new Ext.data.Store({
-    model: 'ShortComic',
+    model: 'ComicOption',
     proxy: {
         type: 'ajax',
-        url : '/comics/list/',
+        url : '/comics/options/',
         reader: {
             type: 'json',
             root: 'comics'
@@ -90,33 +220,29 @@ var ComicsStore = new Ext.data.Store({
     ],
     proxy: {
         type: 'ajax',
-        url : '/comics/get/',
-        filterParam: 'data',
+        url : '/comics/',
         limitParam: undefined,
         reader: {
             type: 'json',
             root: 'comics'
         },
-        encodeFilters: function(filters) {
-            var needed_comics = [];
-            for(var i = 0, len = filters.length; i < len; ++i) {
-                if(filters[i].needed_comics)
-                    needed_comics = needed_comics.concat(filters[i].needed_comics)
-            }
+        buildUrl: function(request) {
+            var needed_comics = request.operation.needed_comics || [];
+
             if (needed_comics.length == 0)
                 needed_comics = MyOptions.getIdsAsArray();
                 
-            if (needed_comics.length == 0)
-                return '';
-            else
-                return JSON.stringify({comics: needed_comics});
+            if (needed_comics.length > 0) {
+                request.params['data'] = JSON.stringify({comics: needed_comics});
+            }
+            return Ext.data.AjaxProxy.superclass.buildUrl.apply(this, arguments);
         }
     }
 });
 
 /*******************************************************************************
 // Universal UI
-********************************************************************************/
+*******************************************************************************/
 Comics.UniversalUI = Ext.extend(Ext.Panel, {
     fullscreen: true,
     layout: 'card',
@@ -213,6 +339,10 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
                 disableSelection : true,
                 pressedCls: '',
                 cls: 'comic',
+                listeners: {
+                    itemswipe: this.onItemSwipe,
+                    scope: this
+                },
                 itemTpl : '<div class="comic-info">                 \
                             <div class="comic-name">{name}</div>    \
                             <div class="comic-author">{author}</div>\
@@ -309,6 +439,15 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
         });
     },
     
+    onItemSwipe: function(list, index, el, event) {
+        var comic = list.getRecord(el);
+        if(event.direction === "left") {
+            Controller.doViewNext(comic);
+        } else {
+            Controller.doViewPrev(comic);
+        }
+    },
+    
     /***************************************
     // Layout handling
     ***************************************/
@@ -331,7 +470,6 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
 /*******************************************************************************
 // Init
 *******************************************************************************/
-
 Comics.Main = {
     init: function () {
         this.ui = new Comics.UniversalUI({

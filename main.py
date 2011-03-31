@@ -22,8 +22,10 @@ import handlers.comics
 import handlers.index
 
 routes =[
-        ("/comics/list/?", handlers.comics.ListAllComics),
-        ("/comics/get/?", handlers.comics.GetComics),
+        ("/comics/(\d+)/?", handlers.comics.GetComic),
+        ("/entries/(\d+)/?", handlers.comics.GetComicEntry),
+        ("/comics/options/?", handlers.comics.ListAllComics),
+        ("/comics/?", handlers.comics.GetComics),
         ("/", handlers.index.IndexHandler)
         ]
 

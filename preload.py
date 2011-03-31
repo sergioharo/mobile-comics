@@ -144,7 +144,7 @@ for y in yahoo:
 ###############################################################################
 # PhD
 ###############################################################################
-c = Comic(name = "Piled Higher & Deeper" author = "Jorge Cham", ctype = 1, num_entries = 0)
+c = Comic(name = "Piled Higher & Deeper", author = "Jorge Cham", ctype = 1, num_entries = 0)
 c.put()
 
 ###############################################################################

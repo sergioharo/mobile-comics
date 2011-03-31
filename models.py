@@ -13,9 +13,9 @@ from google.appengine.api import urlfetch
 import re
 import logging
 
-PHD_TYPE = 0
-COMIC_TYPE = 1
+PHD_TYPE = 1
 YAHOO_TYPE = 2
+COMIC_TYPE = 3
  
 class Fetcher:
     def fetch(self, comic):
@@ -45,7 +45,7 @@ class YahooFetcher(Fetcher):
     def fetch(self, comic):
         url = self.url + comic.meta
         result = urlfetch.fetch(url = url, deadline = 10)
-        m = re.findall('http://d.yimg.com/a/p/u[cm][a-z]+/[a-zA-Z0-9\./]+', result.content)
+        m = re.findall('http://d.yimg.com/a/p/u[cm][a-z]*/[a-zA-Z0-9\./]+', result.content)
         if m is None or len(m) == 0:
             return None
         return m[-1]
@@ -70,8 +70,9 @@ class Comic(db.Model):
     
     @property
     def last_entry(self):
-        self.entries.filter("num=", self.num_entries)
-        return self.entries.get()
+        q = self.entries
+        q.filter("num =", self.num_entries)
+        return q.get()
         
     @property
     def id(self):
@@ -82,5 +83,9 @@ class ComicEntry(db.Model):
     img_url = db.LinkProperty()
     comic = db.ReferenceProperty(Comic, collection_name="entries")
     num = db.IntegerProperty()
+    
+    @property
+    def id(self):
+        return self.key().id()
 
         

@@ -30,7 +30,7 @@ class UpdateComicTask(handlers.BaseHandler):
         img_src = fetch_latest_comic(comic)
         
         if img_src is None:
-            logging.info("Could not find comic url")
+            logging.info("ERROR: Could not find comic url for " + cid)
             return
         
         q = comic.entries
@@ -38,10 +38,10 @@ class UpdateComicTask(handlers.BaseHandler):
         prev_entry = q.get()
         
         if prev_entry is not None:
-            logging.info("Already have comic, not updating")
+            logging.info("ERROR: Already have comic, not updating")
             return
         
-        logging.info("Adding url " + img_src)
+        logging.info("SUCCESS: Adding url " + img_src)
         comic.num_entries += 1
         entry = ComicEntry(img_url = img_src, comic = comic, num = comic.num_entries)
         entry.put()
