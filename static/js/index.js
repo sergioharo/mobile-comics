@@ -446,6 +446,7 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
         } else {
             Controller.doViewPrev(comic);
         }
+        return false;
     },
     
     /***************************************

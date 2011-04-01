@@ -22,7 +22,8 @@ import handlers.tasks
 
 routes = [  
             ('/tasks/update/all/?', handlers.tasks.UpdateComicsWorker),
-            ('/tasks/update/([0-9]+)', handlers.tasks.UpdateComicTask)
+            ('/tasks/update/([0-9]+)', handlers.tasks.UpdateComicTask),
+            ('/tasks/preload/?', handlers.tasks.PreLoadWorker),
 ]
 
 def main():
