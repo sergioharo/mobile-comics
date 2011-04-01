@@ -5,7 +5,7 @@ Ext.ns('Comics');
 *******************************************************************************/
 Comics.Utils = {
     getComicEntryId: function(comicId, entryId) {
-        var x = comicId << 20
+        var x = comicId << 16
         return (entryId | x);
     }
 }
@@ -70,6 +70,51 @@ Ext.regModel('Comic', {
 /*******************************************************************************
 // Controller
 *******************************************************************************/
+var Animator = {
+    recoilLeft: function(node) {
+        Ext.Anim.run(node, 'slide', {
+            out: true,
+            autoClear: true,
+            after: function() {
+                Ext.Anim.run(node, 'slide', {
+                    out: false,
+                    reverse: true,
+                    autoClear: true
+                });
+            }
+        });
+    },
+    
+    recoilRight: function(node) {
+        Ext.Anim.run(node, 'slide', {
+            out: true,
+            autoClear: true,
+            reverse: true,
+            after: function() {
+                Ext.Anim.run(node, 'slide', {
+                    out: false,
+                    autoClear: true
+                });
+            }
+        });
+    },
+    
+    animateNewImg: function(url, node, reverse, after) {
+        Ext.Anim.run(node, 'slide', {
+            out: true,
+            autoClear: true,
+            reverse: reverse,
+            after: function() {
+                node.set( { src: url});
+                Ext.Anim.run(node, 'slide', {
+                    out: false,
+                    reverse: reverse,
+                    autoClear: true
+                });
+            }
+        });
+    }
+}
 var Controller = {
     state: {
         hasLoadedOptions: false,
@@ -102,33 +147,41 @@ var Controller = {
         return Controller.state.views[id].entries[index];
     },
     
-    doViewNext: function(comic) {
+    doViewNext: function(comic, node) {
         Controller.setupView(comic);
         var id = comic.getId();
         var index = Controller.state.views[id].current_entry;
         var max = comic.get('num_entries');
-        if(index >= max)
+        if(index >= max) {
+            Animator.recoilLeft(node);
             return;
+        }
+
         index += 1;
-        Controller.doSetView(comic, index);
+        Controller.doSetView(comic, index, node, false);
     },
     
-    doViewPrev: function(comic) {
+    doViewPrev: function(comic, node) {
         Controller.setupView(comic);
         var id = comic.getId();
         var index = Controller.state.views[id].current_entry;
-        if(index <= 1)
+        if(index <= 1) {
+            Animator.recoilRight(node);
             return;
+        }
+
         index -= 1;
-        Controller.doSetView(comic, index);
+        Controller.doSetView(comic, index, node, true);
     },
     
-    doSetView: function(comic, index) {
+    doSetView: function(comic, index, node, reverse) {
         var id = comic.getId();
         var img = Controller.state.views[id].entries[index];
         Controller.state.views[id].current_entry = index;
         if(img) {
-            comic.set('img_url', img);
+            Animator.animateNewImg(img, node, reverse, function() {
+                comic.set('img_url', img);
+            });
         } else {
             var ceid = Comics.Utils.getComicEntryId(id, index);
             Comics.ComicEntry.load(ceid, {
@@ -138,7 +191,9 @@ var Controller = {
                     var eid = record.get('comic_entry_id');
                     var img = record.get('img_url');
                     Controller.state.views[cid].entries[eid] = img;
-                    comic.set('img_url', img);
+                    Animator.animateNewImg(img, node, reverse, function() {
+                        comic.set('img_url', img);
+                    });
                 },
                 failure: function() {
                     console.log('failed to load next entry for ' + comic.get('name'));
@@ -303,7 +358,16 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
             scope: this
         });
         
-        var btns = [{xtype: 'spacer'}, this.settingsButton];
+        this.resetButton = new Ext.Button({
+            iconCls: 'compose',
+            ui: 'plain',
+            iconMask: true,
+            handler: this.onSettingsReset,
+            hidden: false,
+            scope: this
+        });
+        
+        var btns = [{xtype: 'spacer'}, /* this.resetButton,*/ this.settingsButton];
         
         if (Ext.is.Phone) {
             btns.unshift(this.backButton);
@@ -403,6 +467,10 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
     /***************************************
     // Button Listeners
     ***************************************/
+    onSettingsReset: function() {
+        MyOptions.getProxy().clear();
+        window.location.refresh();
+    },
     
     toggleButtons: function() {
         var optPnl = this.optionsPanel;
@@ -471,10 +539,12 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
     
     onItemSwipe: function(list, index, el, event) {
         var comic = list.getRecord(el);
+        var parent = new Ext.Element(el);
+        var node = parent.down('img');
         if(event.direction === "left") {
-            Controller.doViewNext(comic);
+            Controller.doViewNext(comic, node);
         } else {
-            Controller.doViewPrev(comic);
+            Controller.doViewPrev(comic, node);
         }
         return false;
     },

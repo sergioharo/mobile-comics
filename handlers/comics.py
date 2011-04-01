@@ -38,8 +38,10 @@ class GetComic(handlers.BaseJSONHandler):
 class GetComicEntry(handlers.BaseJSONHandler):
     def get(self, ce_id):
         ce_id = int(ce_id)
-        cid = (ce_id >> 20) & 0x3FF
-        eid = ce_id & 0xFFFFF
+        cid = (ce_id >> 16) & 0xFFFF
+        eid = ce_id & 0xFFFF
+        logging.info("comic id = " + str(cid))
+        logging.info("entry id = " + str(eid))
         c = Comic.get_by_id(cid)
         if c:
             q = c.entries
