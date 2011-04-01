@@ -7,11 +7,12 @@ Created by Sergio Haro on 2011-03-08.
 Copyright (c) 2011 Hungry Bear Inc. All rights reserved.
 """
 from models import Comic
+from models import PHD_TYPE, YAHOO_TYPE, COMIC_TYPE, XKCD_TYPE, ARCAMAX_TYPE
 
-def load():
 ###############################################################################
 # Yahoo
 ###############################################################################
+def loadYahoo():
     yahoo = [
     { "meta": "two-cows-chicken", "name": u"2 Cows and a Chicken"},
     { "meta": "9-chickweed-lane", "name": u"9 Chickweed Lane"},
@@ -139,18 +140,20 @@ def load():
     ];
 
     for y in yahoo:
-        c = Comic(name = y['name'], author = "", ctype = 2, meta = y['meta'], num_entries = 0)
+        c = Comic(name = y['name'], author = "", ctype = YAHOO_TYPE, meta = y['meta'], num_entries = 0)
         c.put()
     
 ###############################################################################
 # PhD
 ###############################################################################
-    c = Comic(name = "Piled Higher & Deeper", author = "Jorge Cham", ctype = 1, num_entries = 0)
+def loadPhd():
+    c = Comic(name = "Piled Higher & Deeper", author = "Jorge Cham", ctype = PHD_TYPE, num_entries = 0)
     c.put()
 
 ###############################################################################
 # Comics.com
 ###############################################################################
+def loadComicsCom():
     comicscom = [
     {"name":"9 Chickweed Lane","meta":"9_chickweed_lane"},
     {"name":"Agnes","meta":"agnes"},
@@ -276,5 +279,62 @@ def load():
     ]
 
     for y in comicscom:
-        c = Comic(name = y['name'], author = "", ctype = 3, meta = y['meta'], num_entries = 0)
+        c = Comic(name = y['name'], author = "", ctype = COMIC_TYPE, meta = y['meta'], num_entries = 0)
+        c.put()
+        
+###############################################################################
+# XKCD
+###############################################################################
+def loadXKCD():
+    c = Comic(name = "XKCD", author = "Randall Munroe", ctype = XKCD_TYPE, num_entries = 0)
+    c.put()
+
+###############################################################################
+# ARCAMAX
+###############################################################################
+def loadArcamax():
+    arcamax = [
+    { "meta": "ninechickweedlane", "name": "9 Chickweed Lane" },
+    { "meta": "agnes", "name": "Agnes" },
+    { "meta": "andycapp", "name": "Andy Capp" },
+    { "meta": "arcticcircle", "name": "Arctic Circle" },
+    { "meta": "bc", "name": "BC" },
+    { "meta": "babyblues", "name": "Baby Blues" },
+    { "meta": "beetlebailey", "name": "Beetle Bailey" },
+    { "meta": "blondie", "name": "Blondie" },
+    { "meta": "boondocks", "name": "Boondocks" },
+    { "meta": "brilliantmindofedisonlee", "name": "Brilliant Mind of Edison Lee" },
+    { "meta": "cathy", "name": "Cathy" },
+    { "meta": "daddyshome", "name": "Daddy's Home" },
+    { "meta": "dilbert", "name": "Dilbert" },
+    { "meta": "thedinetteset", "name": "Dinette Set" },
+    { "meta": "dogeatdoug", "name": "Dog Eat Doug" },
+    { "meta": "doonesbury", "name": "Doonesbury" },
+    { "meta": "dustin", "name": "Dustin" },
+    { "meta": "familycircus", "name": "Family Circus" },
+    { "meta": "garfield", "name": "Garfield" },
+    { "meta": "getfuzzy", "name": "Get Fuzzy" },
+    { "meta": "girlsandsports", "name": "Girls &amp; Sports" },
+    { "meta": "hagarthehorrible", "name": "Hagar the Horrible" },
+    { "meta": "heathcliff", "name": "Heathcliff" },
+    { "meta": "hiandlois", "name": "Hi and Lois" },
+    { "meta": "humorcartoon", "name": "Jerry King Cartoons" },
+    { "meta": "luann", "name": "Luann" },
+    { "meta": "mallardfillmore", "name": "Mallard Fillmore" },
+    { "meta": "momma", "name": "Momma" },
+    { "meta": "mothergooseandgrimm", "name": "Mother Goose &amp; Grimm" },
+    { "meta": "mutts", "name": "Mutts" },
+    { "meta": "nonsequitur", "name": "Non Sequitur" },
+    { "meta": "pearlsbeforeswine", "name": "Pearls Before Swine" },
+    { "meta": "pickles", "name": "Pickles" },
+    { "meta": "redandrover", "name": "Red and Rover" },
+    { "meta": "rhymeswithorange", "name": "Rhymes with Orange" },
+    { "meta": "rubes", "name": "Rubes" },
+    { "meta": "rugrats", "name": "Rugrats" },
+    { "meta": "speedbump", "name": "Speed Bump" },
+    { "meta": "wizardofid", "name": "Wizard of Id" },
+    { "meta": "zits", "name": "Zits" }
+    ]
+    for y in arcamax:
+        c = Comic(name = y['name'], author = "", ctype = ARCAMAX_TYPE, meta = y['meta'], num_entries = 0)
         c.put()

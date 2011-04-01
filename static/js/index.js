@@ -204,6 +204,35 @@ var OptionList = new Ext.data.Store({
             type: 'json',
             root: 'comics'
         }
+    },
+    sorters: [
+        {
+            sorterFn: function(a, b) {
+                var as = OptionList.getGroupString(a),
+                    bs = OptionList.getGroupString(b);
+                
+                if(as == bs)
+                    return 0
+                if(as < bs)
+                    return -1;
+                return 1;
+                
+            },
+            direction: 'ASC'
+        }
+    ],
+    getGroupString : function(record) {
+        // Group by the last name
+        var s = record.get('source');
+        if(s == 2) {
+            return "Yahoo";
+        } else if (s == 3) {
+            return "Comics.com";
+        } else if (s == 5) {
+            return "Arcamax";
+        } else {
+            return "Misc";
+        }
     }
 });
 
@@ -297,6 +326,7 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
         this.optionsList = new Ext.List({
             store: OptionList,
             simpleSelect: true,
+            grouped: true,
             itemTpl : '{name}',
             listeners: {
                 select: this.onOptionSelected,

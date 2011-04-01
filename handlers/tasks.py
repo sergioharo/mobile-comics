@@ -57,6 +57,16 @@ class UpdateComicTask(handlers.BaseHandler):
         self.response.out.write("OK")
         
 class PreLoadWorker(handlers.BaseHandler):
-    def get(self):
-        preload.load()
+    def get(self, flag):
+        flag = int(flag)
+        if flag == 0 or flag == 1:
+            preload.loadPhd()
+        if flag == 0 or flag == 2:
+            preload.loadYahoo()
+        if flag == 0 or flag == 3:
+            preload.loadComicsCom()
+        if flag == 0 or flag == 4:
+            preload.loadXKCD()
+        if flag == 0 or flag == 5:
+            preload.loadArcamax()
         self.response.out.write("OK")
