@@ -432,6 +432,8 @@ Comics.UniversalUI = Ext.extend(Ext.Panel, {
                 store: ComicsStore,
                 disableSelection : true,
                 pressedCls: '',
+                emptyText: "To get started choose your comics by pressing the options button in the top right corner of the page.",
+                deferEmptyText: false,
                 cls: 'comic',
                 listeners: {
                     itemswipe: this.onItemSwipe,
