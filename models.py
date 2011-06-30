@@ -27,7 +27,7 @@ class PhDComicFetcher(Fetcher):
     url = "http://www.phdcomics.com/comics.php"
     def fetch(self, comic):
         result = urlfetch.fetch(url = self.url, deadline = 10)
-        m = re.search('(http://www.phdcomics.com/comics/archive/[_a-zA-Z0-9\.]+)', result.content)
+        m = re.search('(http://www.phdcomics.com/comics/archive/[\w\.]+)', result.content)
         if m is None:
             return None
         return m.group(0)
@@ -37,7 +37,7 @@ class ComicComFetcher(Fetcher):
     def fetch(self, comic):
         url = self.url + comic.meta + "/"
         result = urlfetch.fetch(url = url, deadline = 10)
-        m = re.search('(http://[a-zA-z0-9]+.cdn.cloudfiles.rackspacecloud.com/dyn/str_strip/[_a-zA-Z0-9\.]+)', result.content)
+        m = re.search('(http://[a-zA-z0-9]+.cdn.cloudfiles.rackspacecloud.com/dyn/str_strip/[\w\.]+)', result.content)
         if m is None:
             return None
         return m.group(0)
@@ -47,7 +47,7 @@ class YahooFetcher(Fetcher):
     def fetch(self, comic):
         url = self.url + comic.meta
         result = urlfetch.fetch(url = url, deadline = 10)
-        m = re.findall('http://d.yimg.com/a/p/u[cm][a-z]*/[_a-zA-Z0-9\./]+', result.content)
+        m = re.findall('http://d.yimg.com/a/p/u[cm][a-z]*/[\w\./]+', result.content)
         if m is None or len(m) == 0:
             return None
         return m[-1]
@@ -56,20 +56,20 @@ class XKCDFetcher(Fetcher):
     url = "http://xkcd.com/"
     def fetch(self, comic):
         result = urlfetch.fetch(url = self.url, deadline = 10)
-        m = re.search('(http://imgs.xkcd.com/comics/[_a-zA-Z0-9\.]+)', result.content)
+        m = re.search('(http://imgs.xkcd.com/comics/[\w\.]+)', result.content)
         if m is None:
             return None
         return m.group(0)
         
 class ArcamaxFetcher(Fetcher):
-    url = "http://www.arcamax.com/"
+    url = "http://www.arcamax.com/thefunnies/"
     def fetch(self, comic):
         url = self.url + comic.meta
         result = urlfetch.fetch(url = url, deadline = 10)
-        m = re.search('(http://www.arcamax.com/newspics/[_a-zA-Z0-9\./]+)', result.content)
+        m = re.search('(/newspics/[\w\./]+)', result.content)
         if m is None:
             return None
-        return m.group(0)
+        return 'http://www.arcamax.com' + m.group(0)
                 
 FETCHERS = {
     PHD_TYPE: PhDComicFetcher(),

@@ -13,20 +13,27 @@ from models import Comic, ComicEntry, fetch_latest_comic
 import preload
 
 from google.appengine.ext import webapp
-from google.appengine.api import taskqueue
+from google.appengine.api.taskqueue import Queue, Task
 
 class UpdateComicsWorker(handlers.BaseHandler):
-    def get(self):
+    def addTasks(self):
         q = Comic.all()
+        queue = Queue(name='update-queue')
+        tasks = []
         for comic in q:
-            taskqueue.add(url='/tasks/update/' + str(comic.id))
+            if len(tasks) >= 100:
+                queue.add(tasks)
+                tasks = []
+            else:
+                task = Task(url='/tasks/update/' + str(comic.id))
+                tasks.append(task)
         self.response.out.write("OK")
         
+    def get(self):
+        self.addTasks()
+        
     def post(self):
-        q = Comic.all()
-        for comic in q:
-            taskqueue.add(url='/tasks/update/' + str(comic.id))
-        self.response.out.write("OK")
+        self.addTasks()
         
 class UpdateComicTask(handlers.BaseHandler):
     def post(self, cid):
@@ -46,7 +53,7 @@ class UpdateComicTask(handlers.BaseHandler):
         prev_entry = q.get()
         
         if prev_entry is not None:
-            logging.error("ERROR: Already have comic, not updating")
+            logging.info("ERROR: Already have comic, not updating")
             return
         
         logging.info("SUCCESS: Adding url " + img_src)
