@@ -32,8 +32,20 @@ class GetComics(handlers.BaseJSONHandler):
         self.render("list.js", { 'comics': q})
         
 class GetComic(handlers.BaseJSONHandler):
-    def get(self, id):
-        return
+    def get(self, comicId, episodeId):
+        comicId = int(comicId)
+        episodeId = int(episodeId)
+        comic = Comic.get_by_id(comicId)
+        if comic:
+            q = comic.entries
+            q.filter('num =', episodeId)
+            episode = q.get()
+            if(episode):
+                self.render("entry.js", {'entry': episode})
+                return
+        self.response.clear()
+        self.response.set_status(500)
+        self.response.out.write("This operation could not be completed")
         
 class GetComicEntry(handlers.BaseJSONHandler):
     def get(self, ce_id):
@@ -48,7 +60,7 @@ class GetComicEntry(handlers.BaseJSONHandler):
             q.filter('num =', eid)
             e = q.get()
             if(e):
-                self.render("entry.js", {'entries': [e]})
+                self.render("entry.js", {'entry': e})
                 return
         self.response.clear()
         self.response.set_status(500)
