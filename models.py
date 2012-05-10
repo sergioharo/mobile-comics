@@ -33,11 +33,11 @@ class PhDComicFetcher(Fetcher):
         return m.group(0)
         
 class ComicComFetcher(Fetcher):
-    url = "http://comics.com/"
+    url = "http://www.gocomics.com/"
     def fetch(self, comic):
         url = self.url + comic.meta + "/"
         result = urlfetch.fetch(url = url, deadline = 10)
-        m = re.search('(http://[a-zA-z0-9]+.cdn.cloudfiles.rackspacecloud.com/dyn/str_strip/[\w\.]+)', result.content)
+        m = re.search('(http://cdn.svcs.c2.uclick.com/c2/[\w\.]+)', result.content)
         if m is None:
             return None
         return m.group(0)
@@ -45,12 +45,12 @@ class ComicComFetcher(Fetcher):
 class YahooFetcher(Fetcher):
     url = "http://news.yahoo.com/comics/"
     def fetch(self, comic):
-        url = self.url + comic.meta
+        url = self.url + comic.meta + "-slideshow"
         result = urlfetch.fetch(url = url, deadline = 10)
-        m = re.findall('http://d.yimg.com/a/p/u[cm][a-z]*/[\w\./]+', result.content)
-        if m is None or len(m) == 0:
+        m = re.search('(http://media.zenfs.com/en_us/News/ucomics.com/[\w]+\.[\w]+)', result.content)
+        if m is None:
             return None
-        return m[-1]
+        return m.group(0)
         
 class XKCDFetcher(Fetcher):
     url = "http://xkcd.com/"
